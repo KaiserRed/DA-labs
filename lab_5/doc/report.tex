@@ -1,0 +1,374 @@
+\documentclass[12pt]{article}
+
+\usepackage{fullpage}
+\usepackage{multicol,multirow}
+\usepackage{listings}
+\usepackage{tabularx}
+\usepackage{ulem}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\begin{document}
+
+\section*{Суффиксные деревья}
+
+\noindent Выполнил студент группы M8О-308Б-22 МАИ \textit{Галкин Алексей}.
+
+\subsection*{Постановка задачи}
+
+\textbf{Вариант 4:} Линеаризация циклической строки
+
+\text Необходимо найти минимальную лексикографическую циклическую перестановку строки. Для решения этой задачи рассмотрим и сравним два алгоритма:
+\begin{enumerate}
+    \item Суффиксное дерево.
+    \item Алгоритм Бо Лэнга.
+\end{enumerate}
+
+
+\subsection*{Алгоритм 1: Суффиксное дерево}
+
+\textbf{Описание}: Суффиксное дерево позволяет эффективно работать с различными строковыми задачами, такими как поиск подстрок, сравнение строк и нахождение минимальной циклической перестановки. Суффиксное дерево — это дерево, которое содержит все суффиксы строки как свои подстроки.
+
+\textbf{Этапы работы алгоритма}:
+\begin{enumerate}
+    \item Строим суффиксное дерево для строки.
+    \item Добавляем строку к самой себе для учета циклических сдвигов.
+    \item Поиск минимальной циклической перестановки с помощью обхода дерева.
+\end{enumerate}
+
+\textbf{Сложность алгоритма}: Построение суффиксного дерева имеет временную сложность $O(n)$, где $n$ — длина строки. Поиск минимальной циклической перестановки также требует $O(n)$ операций.
+\subsection*{Метод решения}
+
+Моя программа реализует суффиксное дерево для поиска минимальной циклической перестановки строки. Алгоритм построения суффиксного дерева основан на методе Укконена, который строит дерево за линейное время $O(n)$ по длине строки. Этот алгоритм позволяет эффективно решать задачи поиска и сравнения строк.
+
+Программа состоит из двух основных этапов:
+\begin{enumerate}
+    \item Построение суффиксного дерева для удвоенной строки.
+    \item Поиск минимальной циклической перестановки путем сравнения суффиксов.
+\end{enumerate}
+
+\subsection*{Описание программы}
+
+Для решения задачи были разработаны следующие классы и методы:
+
+\begin{itemize}
+    \item \textbf{struct SuffixTreeNode} — структура для представления узла суффиксного дерева. Узел содержит:
+        \begin{itemize}
+            \item \texttt{Children} — контейнер для хранения потомков узла (ассоциативный массив).
+            \item \texttt{Start, End} — границы подстроки, соответствующей этому узлу.
+            \item \texttt{SuffixLink} — суффиксная ссылка для быстрой навигации между узлами.
+            \item \texttt{SuffixIndex} — индекс суффикса, если узел является листом дерева.
+            \item \texttt{IsDynamicEnd} — флаг, указывающий, был ли \texttt{End} динамически выделен.
+        \end{itemize}
+    
+    \item \textbf{class SuffixTree} — класс для построения и работы с суффиксным деревом:
+        \begin{itemize}
+            \item \texttt{SuffixTree(const std::string\& s)} — конструктор, который строит суффиксное дерево по строке \texttt{s} с использованием алгоритма Укконена. Удваивает строку для учета циклических сдвигов.
+            \item \texttt{std::string GetMinimalCyclicShift()} — функция, которая находит минимальную циклическую перестановку строки, используя суффиксное дерево. Этот метод работает, сравнивая индексы суффиксов строки.
+        \end{itemize}
+\end{itemize}
+
+\subsection*{Описание функций}
+
+\begin{itemize}
+    \item \texttt{NewNode(int start, int* end, bool isDynamic = false)} — создает новый узел дерева с указанием диапазона суффикса (\texttt{start}, \texttt{end}) и флага \texttt{isDynamic}, указывающего, выделен ли \texttt{end} динамически.
+    \item \texttt{ExtendSuffixTree(int pos)} — основной метод для построения дерева. Он отвечает за добавление новых суффиксов в дерево и поддержание его структуры с суффиксными ссылками. Этот метод реализует правила построения дерева Укконена.
+    \item \texttt{WalkDown(SuffixTreeNode* currNode)} — функция для перемещения вниз по дереву. Она используется для оптимизации построения дерева и быстрого перемещения между узлами.
+    \item \texttt{SetSuffixIndexByDFS(SuffixTreeNode* n, int labelHeight)} — функция для установки индексов суффиксов при обходе дерева в глубину (DFS). Используется для маркировки листовых узлов дерева.
+    \item \texttt{EdgeLength(SuffixTreeNode* n)} — возвращает длину ребра между текущим узлом и его потомком, что помогает при навигации по дереву.
+\end{itemize}
+
+Код программы
+\begin{itemize}
+    \item
+        suffix\_tree.hpp,
+        \begin{lstlisting}[language=C++]
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+#define TERMINATION_SYMBOL '$'
+
+using namespace std;
+
+class SuffixTree;
+
+class Node
+{
+public:
+    friend SuffixTree;
+
+    Node(Node *link, int start, int *end) : Node(link, start, end, -1)
+    {
+    }
+
+    Node(Node *link, int start, int *end, int ind) : suffix_link(link),
+                                                     start(start),
+                                                     end(end),
+                                                     suffix_index(ind)
+    {
+    }
+
+private:
+    unordered_map<char, Node *> children;
+    Node *suffix_link;
+    int start;
+    int *end;
+    int suffix_index;
+};
+
+class SuffixTree
+{
+public:
+    SuffixTree(string &text);
+    void BuildSuffixTree();
+    ~SuffixTree()
+    {
+        DeleteSuffixTree(root);
+    }
+    string LexMinString(const size_t & n);
+    string LexMinString(const int id, const size_t & n);
+
+private:
+    void ExtendSuffixTree(int pos);
+    void DeleteSuffixTree(Node *node)
+    {
+        for (auto it : node->children)
+            DeleteSuffixTree(it.second);
+        if (node->suffix_index == -1)
+            delete node->end;
+        delete node;
+    }
+    void CountIndex(Node *node, vector<int> &vec);
+    int EdgeLength(Node *node);
+
+    Node *root = new Node(nullptr, -1, new int(-1));
+    Node *lastCreatedInternalNode = nullptr;
+
+    string text; 
+
+    Node *activeNode = nullptr;   
+    int activeEdge = -1;
+    int activeLength = 0;
+    int remainingSuffixCount = 0;
+    int leafEnd = -1;
+};
+
+        \end{lstlisting}
+        \item
+        suffix\_tree.cpp
+        \begin{lstlisting}[language=C++]
+#include "suffix_tree.hpp"
+
+
+SuffixTree::SuffixTree(string &str) : text(str)
+{
+    text += TERMINATION_SYMBOL;
+    BuildSuffixTree();
+}
+
+void SuffixTree::BuildSuffixTree()
+{
+    activeNode = root;
+    for (size_t i = 0; i < text.length(); i++)
+        ExtendSuffixTree(i);
+}
+
+int SuffixTree::EdgeLength(Node *node)
+{
+    return *(node->end) - (node->start) + 1;
+}
+
+void SuffixTree::ExtendSuffixTree(int phase)
+{
+    lastCreatedInternalNode = nullptr;
+    leafEnd++;
+    remainingSuffixCount++;
+
+    while (remainingSuffixCount > 0)
+    {
+        if (activeLength == 0)
+            activeEdge = phase; 
+
+        auto find = activeNode->children.find(text[activeEdge]);
+
+        if (find == activeNode->children.end())
+        {
+            activeNode->children.insert(make_pair(
+                text[activeEdge],
+                new Node(root, phase, &leafEnd, phase - remainingSuffixCount + 1)));
+            if (lastCreatedInternalNode != nullptr)
+            {
+                lastCreatedInternalNode->suffix_link = activeNode;
+                lastCreatedInternalNode = nullptr;
+            }
+        }
+        else
+        {
+            Node *next = find->second;
+            int edge_length = EdgeLength(next);
+
+            if (activeLength >= edge_length)
+            {
+                activeEdge += edge_length;
+                activeLength -= edge_length;
+                activeNode = next;
+                continue; 
+            }
+
+            if (text[next->start + activeLength] == text[phase])
+            {
+                if (lastCreatedInternalNode != nullptr && activeNode != root)
+                    lastCreatedInternalNode->suffix_link = activeNode;
+                activeLength++;
+                break;
+            }
+
+            Node *split = new Node(root, next->start, new int(next->start + activeLength - 1));
+            activeNode->children[text[activeEdge]] = split;
+            next->start += activeLength;
+            split->children.insert(make_pair(text[phase], new Node(root, phase, &leafEnd, phase - remainingSuffixCount + 1)));
+            split->children.insert(make_pair(text[next->start], next));
+            if (lastCreatedInternalNode != nullptr)
+                lastCreatedInternalNode->suffix_link = split;
+            lastCreatedInternalNode = split;
+        }
+
+        remainingSuffixCount--;
+
+        if (activeNode == root && activeLength > 0)
+        {
+            activeLength--;
+            activeEdge++;
+        }
+        else if (activeNode != root)
+            activeNode = activeNode->suffix_link;
+    }
+}
+
+void SuffixTree::CountIndex(Node *node, vector<int> &vec)
+{
+    if (!node)
+        return;
+    for (auto it : node->children)
+        CountIndex(it.second, vec);
+    if (node->suffix_index != -1)
+        vec.push_back(node->suffix_index);
+}
+
+string SuffixTree::LexMinString(const size_t &n)
+{
+    vector<int> suffixIndices;
+    CountIndex(root, suffixIndices);
+
+    int minIndex = -1; 
+    for (const auto &index : suffixIndices)
+    {
+        if (index < n)
+        {
+            if (minIndex == -1 || text.compare(index, n, text, minIndex, n) < 0)
+            {
+                minIndex = index;
+            }
+        }
+    }
+
+    return (minIndex != -1) ? text.substr(minIndex, n) : "";
+}
+        \end{lstlisting}
+        \item
+        main.cpp
+        \begin{lstlisting}[language=C++]
+#include <iostream>
+#include <string>
+#include "suffix_tree.hpp"
+
+using namespace std;
+
+int main() {
+    string input;
+    cin >> input;
+
+    string doubled = input + input;
+
+    SuffixTree suffixTree(doubled);
+
+    string result = suffixTree.LexMinString(input.size());
+
+    cout << result << endl;
+
+    return 0;
+}
+
+        \end{lstlisting}
+\end{itemize}
+
+\subsection*{Дневник отладки}
+
+\begin{itemize}
+    \item Во время разработки возникла проблема с корректной обработкой строк в процессе сравнения суффиксов. Было принято решение перейти на работу с индексами вместо создания новых строк, что значительно уменьшило использование памяти.
+    \item Алгоритм Укконена при построении дерева потребовал тщательной отладки суффиксных ссылок, поскольку ошибки в их установке приводили к неправильному построению дерева.
+    \item Также возникли сложности с управлением памятью, так как узлы дерева используют динамически выделяемую память для хранения концов суффиксов. Для решения этой проблемы были добавлены флаги для указания динамического выделения, что позволило избежать ошибок при освобождении памяти.
+\end{itemize}
+
+\subsection*{Использованный алгоритм}
+
+Для построения суффиксного дерева использован алгоритм Укконена, который работает за $O(n)$ и является одним из самых эффективных методов построения суффиксных деревьев. Этот алгоритм позволяет строить суффиксное дерево на лету, не требуя заранее знать всю строку.
+
+Линеаризация циклической строки осуществляется путём поиска минимальной суффиксной перестановки на основе сравнения суффиксов строки. В результате программа находит индекс, с которого начинается минимальная лексикографическая перестановка.
+
+
+\subsection*{Тестирование производительности}
+Сравним с другим алгоритмом. Простейшая реализация алгоритма Бо Лэнга решает задачу поиска минимальной лексикографической циклической перестановки строки за время $O(n)$.
+
+Для оценки производительности были проведены тесты с разными длинами строк. На графике ниже показаны времена выполнения суффиксного дерева и алгоритма Бо Лэнга в зависимости от длины строки.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            xlabel={Длина строки (символы)},
+            ylabel={Время выполнения (ms)},
+            grid=major,
+            xmin=0, xmax=100000,
+            ymin=0, ymax=50,
+            legend style={at={(0.5,-0.2)},anchor=north},
+            legend columns=2,
+            width=0.8\textwidth,
+            height=0.5\textwidth,
+            ]
+            \addplot[color=red,mark=*] coordinates {
+                (1000,0.283508)
+                (5000,1.72067)
+                (10000,4.02408)
+                (50000,21.347)
+                (100000, 47.2471)
+            };
+            \addlegendentry{Суффиксное дерево}
+            \addplot[color=blue,mark=square] coordinates {
+                (1000,0.067699)
+                (5000,0.304679)
+                (10000,0.557049)
+                (50000,2.58272)
+                (100000,5.13926)
+            };
+            \addlegendentry{Алгоритм Бо Лэнга}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{Сравнение времени выполнения суффиксного дерева и алгоритма Бо Лэнга}
+\end{figure}
+
+
+\newpage
+\subsection*{Выводы}
+
+Суффиксное дерево обладает большей гибкостью и может решать более широкий круг задач, таких как поиск подстрок или нахождение общих подстрок. Однако для задачи минимальной циклической перестановки алгоритм Бо Лэнга работет быстрее и эффективнее, так и происходит
+
+\end{document}
