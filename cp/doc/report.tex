@@ -1,0 +1,228 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+\usepackage{quotmark}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\bfseries
+
+{\Large Московский авиационный институт\\ (национальный исследовательский университет)}
+
+\vspace{48pt}
+
+{\large Факультет информационных технологий и прикладной математики}
+
+\vspace{36pt}
+
+{\large Кафедра вычислительной математики и программирования}
+
+\vspace{48pt}
+
+Курсовой проект по курсу "Дискретный анализ"
+
+Тема проекта "Эвристический поиск на графах"
+\end{center}
+
+\vspace{72pt}
+
+\begin{flushright}
+\begin{tabular}{rl}
+Студент: & А.\,Д. Галкин \\
+Преподаватель: & Н.\,К. Макаров \\
+Группа: & М8О-308Б-22 \\
+Дата: & \underline{\hspace{3cm}} \\
+Оценка: & \underline{\hspace{3cm}} \\
+Подпись: & \underline{\hspace{3cm}} \\
+\end{tabular}
+\end{flushright}
+
+\vfill
+
+\begin{center}
+\bfseries
+Москва, \the\year
+\end{center}
+\end{titlepage}
+
+\newpage
+
+\section*{Условие}
+
+Реализовать алгоритм $A^*$ для неориентированного графа. Расстояние между соседями вычисляется как простое евклидово расстояние на плоскости.
+
+Формат ввода:
+\begin{itemize}
+    \item В первой строке даны два числа $n$ и $m$ ($1 \le n \le 10^4$, $1 \le m \le 10^5$) — количество вершин и рёбер в графе.
+    \item В следующих $n$ строках даны пары чисел $x$ $y$ ($-10^9 \le x, y \le 10^9$), описывающие положение вершин графа в двумерном пространстве.
+    \item В следующих $m$ строках даны пары чисел в отрезке от $1$ до $n$, описывающие рёбра графа.
+    \item Далее дано число $q$ ($1 \le q \le 300$) и в следующих $q$ строках даны запросы в виде пар чисел $a$ $b$ ($1 \le a, b \le n$) на поиск кратчайшего пути между двумя вершинами.
+\end{itemize}
+
+Формат вывода:
+\begin{itemize}
+    \item В ответ на каждый запрос выведите единственное число — длину кратчайшего пути между заданными вершинами с абсолютной либо относительной точностью $10^{-6}$, если пути между вершинами не существует, выведите $-1$.
+\end{itemize}
+
+\section*{Методы решения}
+
+Код реализует алгоритм $A^*$ для поиска кратчайшего пути в графе. В качестве эвристической функции используется евклидово расстояние между текущей вершиной и целевой вершиной. Алгоритм использует очередь с приоритетом (priority\_queue) для выбора вершины с наименьшей оценкой $f(n) = g(n) + h(n)$, где $g(n)$ — стоимость пути от начальной вершины до текущей, а $h(n)$ — эвристическая оценка стоимости пути от текущей вершины до целевой.
+
+\subsection*{Шаги алгоритма}
+
+\begin{enumerate}
+    \item \textbf{Инициализация:}
+    \begin{itemize}
+        \item Создать массивы для хранения стоимости пути ($g\_cost$) и флага посещения ($visited$).
+        \item Установить $g\_cost[start] = 0$, остальные значения равны $\infty$.
+        \item Поместить начальную вершину в очередь с приоритетом с $f\_cost = 0$.
+    \end{itemize}
+    
+    \item \textbf{Работа с очередью:}
+    Пока очередь с приоритетом не пуста:
+    \begin{itemize}
+        \item Извлечь вершину с наименьшим $f\_cost$.
+        \item Если текущая вершина совпадает с целевой, то путь найден.
+    \end{itemize}
+
+    \item \textbf{Обработка соседей:}
+    Для каждого соседа текущей вершины:
+    \begin{itemize}
+        \item Вычислить $tentative\_g = g\_cost[u] + distance(u, v)$.
+        \item Если $tentative\_g < g\_cost[v]$, обновить:
+        \begin{itemize}
+            \item $g\_cost[v]$ — минимальную стоимость пути до соседа.
+            \item $f\_cost = g\_cost[v] + h(v)$, где $h(v)$ — эвклидово расстояние до цели.
+        \end{itemize}
+        \item Добавить соседа в очередь с приоритетом, если он ещё не посещён.
+    \end{itemize}
+
+    \item \textbf{Завершение:}
+    \begin{itemize}
+        \item Если целевая вершина была извлечена из очереди, вывести её $g\_cost$.
+        \item Если очередь пуста, а путь не найден, вывести $-1$.
+    \end{itemize}
+\end{enumerate}
+
+\section*{Исходный код}
+\begin{lstlisting}[language=C++, basicstyle=\ttfamily\footnotesize, breaklines=true]
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <iomanip>
+#include <limits>
+using namespace std;
+
+struct Edge {
+    double distance;
+    int vertex;
+
+    Edge(double dist, int v) : distance(dist), vertex(v) {}
+};
+
+struct Node {
+    double f_cost;
+    int vertex;
+
+    Node(double f, int v) : f_cost(f), vertex(v) {}
+
+    bool operator>(const Node& other) const {
+        return f_cost > other.f_cost;
+    }
+};
+
+inline double euclidean_distance(pair<int, int>& p1, pair<int, int>& p2) {
+    return sqrt(pow(p2.first - p1.first, 2) + pow(p2.second - p1.second, 2));
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<pair<int, int>> coordinates(n + 1);
+    vector<vector<Edge>> graph(n + 1);
+
+    for (int i = 1; i <= n; ++i) {
+        cin >> coordinates[i].first >> coordinates[i].second;
+    }
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        double dist = euclidean_distance(coordinates[u], coordinates[v]);
+        graph[u].emplace_back(dist, v);
+        graph[v].emplace_back(dist, u);
+    }
+
+    int q;
+    cin >> q;
+
+    while (q--) {
+        int start, goal;
+        cin >> start >> goal;
+
+        if (start == goal) {
+            cout << fixed << setprecision(6) << 0.0 << '\n';
+            continue;
+        }
+
+        priority_queue<Node, vector<Node>, greater<Node>> pq;
+        vector<double> g_cost(n + 1, numeric_limits<double>::infinity());
+        vector<bool> visited(n + 1, false);
+
+        g_cost[start] = 0;
+        pq.emplace(0.0, start);
+
+        bool path_found = false;
+        while (!pq.empty()) {
+            Node current = pq.top();
+            pq.pop();
+
+            int u = current.vertex;
+
+            if (visited[u]) continue;
+            visited[u] = true;
+
+            if (u == goal) {
+                cout << fixed << setprecision(6) << g_cost[u] << '\n';
+                path_found = true;
+                break;
+            }
+
+            for (const Edge& edge : graph[u]) {
+                int v = edge.vertex;
+                double tentative_g = g_cost[u] + edge.distance;
+
+                if (!visited[v] && tentative_g < g_cost[v]) {
+                    g_cost[v] = tentative_g;
+                    double h_cost = euclidean_distance(coordinates[v], coordinates[goal]);
+                    pq.emplace(g_cost[v] + h_cost, v);
+                }
+            }
+        }
+
+        if (!path_found) {
+            cout << -1 << '\n';
+        }
+    }
+
+    return 0;
+}
+
+\end{lstlisting}
+
+\section*{Выводы}
+
+В данной курсовой работе был реализован алгоритм $A^*$ для поиска кратчайшего пути на графе. Было изучено применение эвристической функции для оптимизации поиска и использования очереди с приоритетом для эффективного выбора следующей вершины для обработки. Реализация алгоритма позволяет находить кратчайшие пути между заданными вершинами с высокой точностью.
+
+\end{document}
