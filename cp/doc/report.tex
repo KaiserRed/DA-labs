@@ -220,7 +220,69 @@ int main() {
 }
 
 \end{lstlisting}
+\section*{Тест производительности}
 
+В процессе тестирования будем сравнивать наш алгоритм A* с Дейкстрой. Для тестирования рассмотрим насыщенные графы, разряженные, а также посмотрим на время работы при поиске пути к элементу, связи с которым нет.
+
+\begin{lstlisting}
+alexey@alexey-Yoga-Slim-7-Pro-14IHU5:~/code/da-labs/cp/build$ ./benchmark <../tests/1.txt 
+n = 10 m = 15 
+Dijkstra time: 0.000018 s
+A* time: 0.000012 s
+Dijkstra result: 1324.234190
+A* result: 1324.234190
+Dijkstra time: 0.000014 s
+A* time: 0.000013 s
+Dijkstra result: 1725.931403
+A* result: 1725.931403
+Dijkstra time: 0.000015 s
+A* time: 0.000015 s
+Dijkstra result: 3053.433784
+A* result: 3053.433784
+alexey@alexey-Yoga-Slim-7-Pro-14IHU5:~/code/da-labs/cp/build$ ./benchmark <../tests/2.txt 
+n = 100 m = 150 
+Dijkstra time: 0.000162 s
+A* time: 0.000139 s
+Dijkstra result: 5264.315383
+A* result: 5264.315383
+Dijkstra time: 0.000112 s
+A* time: 0.000062 s
+Dijkstra result: 5941.390579
+A* result: 5941.390579
+Dijkstra time: 0.000093 s
+A* time: 0.000072 s
+Dijkstra result: 3491.785292
+A* result: 3491.785292
+alexey@alexey-Yoga-Slim-7-Pro-14IHU5:~/code/da-labs/cp/build$ ./benchmark <../tests/3.txt 
+n = 1000 m = 4000 
+Dijkstra time: 0.000181 s
+A* time: 0.000041 s
+Dijkstra result: 1604.004397
+A* result: 1604.004397
+Dijkstra time: 0.000426 s
+A* time: 0.000126 s
+Dijkstra result: 2659.460141
+A* result: 2659.460141
+Dijkstra time: 0.000164 s
+A* time: 0.000049 s
+Dijkstra result: 2083.813527
+A* result: 2083.813527
+alexey@alexey-Yoga-Slim-7-Pro-14IHU5:~/code/da-labs/cp/build$ ./benchmark <../tests/4.txt 
+n = 100 m = 100 
+Dijkstra time: 0.000117 s
+A* time: 0.000125 s
+Dijkstra result: -1.000000
+A* result: -1.000000
+Dijkstra time: 0.000066 s
+A* time: 0.000054 s
+Dijkstra result: 3746.421760
+A* result: 3746.421760
+Dijkstra time: 0.000039 s
+A* time: 0.000035 s
+Dijkstra result: 2691.991992
+A* result: 2691.991992
+\end{lstlisting}
+Как можно заметить, алгоритм A* на всех тестах показывает себя лучше, чем алгоритм Дейкстры.
 \section*{Выводы}
 
 В данной курсовой работе был реализован алгоритм $A^*$ для поиска кратчайшего пути на графе. Было изучено применение эвристической функции для оптимизации поиска и использования очереди с приоритетом для эффективного выбора следующей вершины для обработки. Реализация алгоритма позволяет находить кратчайшие пути между заданными вершинами с высокой точностью.

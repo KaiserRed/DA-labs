@@ -8,3 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add executable
 add_executable(cp main.cpp)
+
+add_executable(benchmark benchmark.cpp)
+
